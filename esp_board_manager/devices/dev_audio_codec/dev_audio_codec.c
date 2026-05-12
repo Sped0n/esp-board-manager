@@ -67,6 +67,28 @@ extern uint8_t i2s_chan_handles[];
         return 0;                                                                                                                    \
     }
 
+// ADC and DAC codec configuration setup function template (Specifically for ES8389)
+#define DEFINE_ES8389_CONFIG_SETUP(codec_name)                                                                                  \
+    static int codec_name##_config_setup(dev_audio_codec_config_t *base_cfg, dev_audio_codec_handles_t *handles, void *specific_cfg) \
+    {                                                                                                                                \
+        CODEC_CONFIG_STRUCT(codec_name) *codec_cfg = (CODEC_CONFIG_STRUCT(codec_name) *)specific_cfg;                                \
+        codec_cfg->ctrl_if                         = handles->ctrl_if;                                                               \
+        codec_cfg->gpio_if                         = handles->gpio_if;                                                               \
+        codec_cfg->use_mclk                        = base_cfg->mclk_enabled;                                                         \
+        codec_cfg->pa_pin                          = base_cfg->pa_cfg.port;                                                          \
+        codec_cfg->hw_gain.pa_gain                 = base_cfg->pa_cfg.gain;                                                          \
+        codec_cfg->pa_reverted                     = base_cfg->pa_cfg.active_level == 1 ? false : true;                              \
+        /* Enable reference signal by default (temporary change) */                                                                  \
+        codec_cfg->no_dac_ref                      = true;                                                                           \
+        if (base_cfg->dac_enabled) {                                                                                                 \
+            codec_cfg->codec_mode = ESP_CODEC_DEV_WORK_MODE_DAC;                                                                     \
+        }                                                                                                                            \
+        if (base_cfg->adc_enabled) {                                                                                                 \
+            codec_cfg->codec_mode |= ESP_CODEC_DEV_WORK_MODE_ADC;                                                                    \
+        }                                                                                                                            \
+        return 0;                                                                                                                    \
+    }
+
 #define DEFINE_AUDIO_CODEC_CONFIG_SETUP_NO_MCLK(codec_name)                                                                          \
     static int codec_name##_config_setup(dev_audio_codec_config_t *base_cfg, dev_audio_codec_handles_t *handles, void *specific_cfg) \
     {                                                                                                                                \
@@ -213,7 +235,7 @@ DEFINE_AUDIO_CODEC_CONFIG_SETUP_NO_MCLK(es8388)
 
 #ifdef CONFIG_CODEC_ES8389_SUPPORT
 DEFINE_CODEC_FACTORY(es8389)
-DEFINE_AUDIO_CODEC_CONFIG_SETUP(es8389)
+DEFINE_ES8389_CONFIG_SETUP(es8389)
 #endif  /* CONFIG_CODEC_ES8389_SUPPORT */
 
 #ifdef CONFIG_CODEC_TAS5805M_SUPPORT
