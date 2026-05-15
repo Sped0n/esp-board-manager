@@ -45,6 +45,58 @@ function add_github_ssh_keys() {
   } >> ~/.ssh/config
 }
 
+function add_github_https_credentials() {
+  local github_user="${GH_PUSH_USER:-${GITHUB_USER:-}}"
+  local github_token="${GH_PUSH_TOKEN:-${GITHUB_TOKEN:-}}"
+
+  if [[ -z "${github_user}" ]]; then
+    echo "GH_PUSH_USER or GITHUB_USER is required for GitHub HTTPS push."
+    exit 1
+  fi
+
+  if [[ -z "${github_token}" ]]; then
+    echo "GH_PUSH_TOKEN or GITHUB_TOKEN is required for GitHub HTTPS push."
+    exit 1
+  fi
+
+  local askpass
+  askpass="$(mktemp)"
+  {
+    printf '#!/usr/bin/env bash\n'
+    printf 'case "$1" in\n'
+    printf '  *Username*) printf "%%s\\n" "${GITHUB_HTTPS_USER:?GITHUB_HTTPS_USER is not set}" ;;\n'
+    printf '  *Password*) printf "%%s\\n" "${GITHUB_HTTPS_TOKEN:?GITHUB_HTTPS_TOKEN is not set}" ;;\n'
+    printf '  *) printf "\\n" ;;\n'
+    printf 'esac\n'
+  } > "${askpass}"
+  chmod 700 "${askpass}"
+
+  export GITHUB_HTTPS_USER="${github_user}"
+  export GITHUB_HTTPS_TOKEN="${github_token}"
+  export GIT_ASKPASS="${askpass}"
+  export GIT_TERMINAL_PROMPT=0
+}
+
+function get_github_https_remote() {
+  local github_remote="${TARGET_GITHUB_REPO:-https://github.com/espressif/esp-board-manager.git}"
+
+  case "${github_remote}" in
+    git@github.com:*)
+      github_remote="https://github.com/${github_remote#git@github.com:}"
+      ;;
+    ssh://git@github.com/*)
+      github_remote="https://github.com/${github_remote#ssh://git@github.com/}"
+      ;;
+  esac
+
+  if [[ "${github_remote}" != https://github.com/* ]]; then
+    echo "GitHub remote must use https://github.com/ for token push: ${github_remote}"
+    exit 1
+  fi
+
+  printf "%s\n" "${github_remote}"
+}
+
 function push_to_github() {
   if [[ -n "${CI_COMMIT_TAG:-}" ]]; then
     git push github "${CI_COMMIT_TAG}"
