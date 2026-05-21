@@ -17,6 +17,16 @@ function add_ssh_key() {
   chmod 600 "${HOME}/.ssh/${key_name}"
 }
 
+function add_doc_server_ssh_keys() {
+  local key_string="${1}"
+  local server_url="${2}"
+  local server_user="${3}"
+  add_ssh_key "${key_string}"
+  mkdir -p ~/.ssh
+  chmod 700 ~/.ssh
+  echo -e "Host ${server_url}\n\tStrictHostKeyChecking no\n\tUser ${server_user}\n" >> ~/.ssh/config
+}
+
 function add_gitlab_ssh_keys() {
   add_ssh_key "${GITLAB_KEY:-}" "id_rsa"
 

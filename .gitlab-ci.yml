@@ -1,6 +1,8 @@
 stages:
   - pre_check
   - build
+  - build_docs
+  - deploy_docs
   - deploy
 
 workflow:
@@ -30,4 +32,5 @@ include:
   - ".gitlab/ci/common.yml"
   - ".gitlab/ci/pre-check.yml"
   - ".gitlab/ci/build-test-apps.yml"
+  - ".gitlab/ci/docs.yml"
   - ".gitlab/ci/deploy.yml"

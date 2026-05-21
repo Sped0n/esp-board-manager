@@ -1,0 +1,4 @@
+esp-docs==2.*
+setuptools<82
+sphinxcontrib-mermaid
+cairosvg
