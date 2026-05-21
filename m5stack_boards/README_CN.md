@@ -1,0 +1,26 @@
+# M5Stack Boards
+
+[![组件注册表](https://components.espressif.com/components/espressif/m5stack_boards/badge.svg)](https://components.espressif.com/components/espressif/m5stack_boards)
+
+[English](README.md)
+
+ESP Board Manager 的 M5Stack 板卡定义组件。
+
+本组件不会作为 `esp_board_manager` 的默认依赖。如果工程需要这些板子，请显式添加：
+
+```yaml
+dependencies:
+  espressif/m5stack_boards:
+    version: "^0.5.0"
+```
+
+本组件提供可被 ESP Board Manager 识别和使用的板级配置文件，包括板子信息、外设及设备配置、板级默认 sdkconfig 等。添加本组件后，可通过 ESP Board Manager 的命令查看板子，或是选中板子生成配置代码。
+
+关于 ESP Board Manager 的更多信息，请参考 [`esp_board_manager` 组件文档](https://github.com/espressif/esp-board-manager/blob/main/esp_board_manager/README_CN.md)。
+
+## 支持的板级
+
+| 板子名称 | 芯片 | 音频 | SD卡 | LCD | LCD 触摸 | 摄像头 | 按键 | LED 灯带 |
+|---|---|---|---|---|---|---|---|---|
+| [`M5STACK CORES3`](https://docs.m5stack.com/zh_CN/core/CoreS3) | ESP32-S3 | AW88298 + ES7210 | SDSPI | ILI9342C | FT5x06 | - | - | - |
+| [`M5STACK TAB5`](https://docs.m5stack.com/zh_CN/core/Tab5) | ESP32-P4 | ES8388 + ES7210 | SDMMC | ILI9881C | GT911 | SC202CS | - | - |

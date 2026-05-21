@@ -1,0 +1,11 @@
+version: 0.5.0
+description: M5Stack board definitions for ESP Board Manager
+url: https://github.com/espressif/esp-board-manager
+documentation: https://github.com/espressif/esp-board-manager/blob/main/m5stack_boards/README.md
+issues: https://github.com/espressif/esp-board-manager/issues
+
+tags:
+  - board_manager
+  - esp_board_manager
+  - m5stack
+  - m5stack_boards

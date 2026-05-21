@@ -1,4 +1,4 @@
-name: Push esp_board_manager to https://components.espressif.com
+name: Push components to https://components.espressif.com
 
 on:
   push:
@@ -14,10 +14,13 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: "recursive"
-      - name: Upload esp_board_manager to the component registry
+      - name: Upload components to the component registry
         uses: espressif/upload-components-ci-action@v2
         with:
           components: |
             esp_board_manager: ./esp_board_manager
+            esp_boards: ./esp_boards
+            esp_friends_boards: ./esp_friends_boards
+            m5stack_boards: ./m5stack_boards
           namespace: "espressif"
           api_token: ${{ secrets.IDF_COMPONENT_API_TOKEN }}
