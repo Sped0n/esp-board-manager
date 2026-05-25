@@ -6,6 +6,54 @@ Tests -b parameter and positional argument with names, indices, and error cases
 import pytest
 
 
+def test_find_board_config_files_accepts_board_directory_entries(tmp_path, bmgr_root):
+    import sys
+    sys.path.insert(0, str(bmgr_root))
+    from generators.config_generator import BoardDirectory, ConfigGenerator
+
+    board_path = tmp_path / 'test_board'
+    board_path.mkdir()
+    periph_yaml = board_path / 'board_peripherals.yaml'
+    dev_yaml = board_path / 'board_devices.yaml'
+    periph_yaml.write_text('peripherals: []\n', encoding='utf-8')
+    dev_yaml.write_text('devices: []\n', encoding='utf-8')
+
+    generator = ConfigGenerator(tmp_path)
+    all_boards = {
+        'test_board': BoardDirectory(
+            name='test_board',
+            path=str(board_path),
+            source='test',
+            source_type='component',
+        )
+    }
+
+    assert generator.find_board_config_files('test_board', all_boards) == (
+        str(periph_yaml),
+        str(dev_yaml),
+    )
+
+
+def test_find_board_config_files_still_accepts_legacy_path_entries(tmp_path, bmgr_root):
+    import sys
+    sys.path.insert(0, str(bmgr_root))
+    from generators.config_generator import ConfigGenerator
+
+    board_path = tmp_path / 'test_board'
+    board_path.mkdir()
+    periph_yaml = board_path / 'board_peripherals.yaml'
+    dev_yaml = board_path / 'board_devices.yaml'
+    periph_yaml.write_text('peripherals: []\n', encoding='utf-8')
+    dev_yaml.write_text('devices: []\n', encoding='utf-8')
+
+    generator = ConfigGenerator(tmp_path)
+
+    assert generator.find_board_config_files('test_board', {'test_board': str(board_path)}) == (
+        str(periph_yaml),
+        str(dev_yaml),
+    )
+
+
 class TestBoardSelectionByName:
     """Test board selection using board names"""
 
@@ -230,4 +278,3 @@ class TestEdgeCases:
         long_name = 'a' * 200
         result = run_bmgr_cmd([long_name, '--kconfig-only'], check=False)
         assert result.returncode != 0
-
