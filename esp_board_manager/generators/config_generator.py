@@ -256,15 +256,14 @@ class ConfigGenerator(LoggerMixin):
         source_type: str,
         source: str,
     ) -> None:
-        """Add a board to the scan result and report duplicate names deterministically."""
+        """Add a board to the scan result, preserving later-source override priority."""
         board_path_abs = str(Path(board_path).resolve())
         existing = boards.get(board_name)
         if existing:
             self.logger.warning(
-                f'⚠️  Duplicate board "{board_name}" skipped from {board_path_abs}; '
-                f'already found in {existing.path}'
+                f'⚠️  Duplicate board "{board_name}" from {board_path_abs} overrides '
+                f'previous board from {existing.path}'
             )
-            return
         boards[board_name] = BoardDirectory(
             name=board_name,
             path=board_path_abs,

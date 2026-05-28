@@ -3,7 +3,78 @@ Test board selection functionality
 Tests -b parameter and positional argument with names, indices, and error cases
 """
 
+import subprocess
+
 import pytest
+
+
+def _write_minimal_board(board_path, marker):
+    board_path.mkdir(parents=True)
+    board_path.joinpath('board_info.yaml').write_text(
+        f'board: {board_path.name}\nchip: esp32s3\ndescription: {marker}\n',
+        encoding='utf-8',
+    )
+    board_path.joinpath('board_peripherals.yaml').write_text('peripherals: []\n', encoding='utf-8')
+    board_path.joinpath('board_devices.yaml').write_text('devices: []\n', encoding='utf-8')
+
+
+def test_scan_board_directories_later_sources_override_same_named_boards(tmp_path, bmgr_root):
+    import sys
+    sys.path.insert(0, str(bmgr_root))
+    from generators.config_generator import ConfigGenerator
+
+    bmgr_root_dir = tmp_path / 'bmgr'
+    project_dir = tmp_path / 'project'
+    board_name = 'same_board'
+    builtin_board = bmgr_root_dir / 'boards' / board_name
+    component_board = project_dir / 'components' / 'board_component' / 'boards' / board_name
+    customer_board = tmp_path / 'customer_boards' / board_name
+
+    _write_minimal_board(builtin_board, 'builtin')
+    _write_minimal_board(component_board, 'component')
+    _write_minimal_board(customer_board, 'customer')
+
+    generator = ConfigGenerator(bmgr_root_dir, project_dir=str(project_dir))
+    boards = generator.scan_board_directories(str(customer_board.parent))
+
+    assert boards[board_name].path == str(customer_board.resolve())
+    assert boards[board_name].source_type == 'customer'
+
+
+def test_cli_same_named_board_priority_matches_real_scan_order(tmp_path, script_path):
+    project_dir = tmp_path / 'project'
+    customer_root = tmp_path / 'customer_boards'
+    board_name = 'esp_box_3'
+    component_board = project_dir / 'components' / 'priority_component' / 'boards' / board_name
+    customer_board = customer_root / board_name
+
+    _write_minimal_board(component_board, 'component shadows built-in')
+    _write_minimal_board(customer_board, 'customer shadows component')
+
+    result = subprocess.run(
+        [
+            'python3',
+            str(script_path),
+            '-b',
+            board_name,
+            '-c',
+            str(customer_root),
+            '--project-dir',
+            str(project_dir),
+            '--kconfig-only',
+            '--log-level',
+            'DEBUG',
+        ],
+        cwd=str(project_dir),
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert f'Duplicate board "{board_name}"' in result.stdout
+    assert f'✅ Board path: {customer_board.resolve()}' in result.stdout
+    assert f'Peripherals: {customer_board.resolve() / "board_peripherals.yaml"}' in result.stdout
+    assert f'Devices: {customer_board.resolve() / "board_devices.yaml"}' in result.stdout
 
 
 def test_find_board_config_files_accepts_board_directory_entries(tmp_path, bmgr_root):

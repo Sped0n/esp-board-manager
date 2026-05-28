@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.5.13
+
+### Bug Fixes
+
+- Fixed same-named board selection priority after the 0.5.12 board source metadata change. Later scanned sources now override earlier ones again, so `-c/--customer-path` boards correctly take priority over component and built-in boards.
+
 ## 0.5.12
 
 ### Important Changes
