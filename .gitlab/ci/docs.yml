@@ -1,0 +1,104 @@
+variables:
+  ESP_DOCS_ENV_IMAGE: "$CI_DOCKER_REGISTRY/esp-idf-doc-env-v5.5:2-1"
+  ESP_DOCS_LATEST_BRANCH_NAME: "main"
+
+# stage: pre_check
+# Fail fast if the en/ and zh_CN/ folder trees diverge. English pages may only
+# contain a placeholder note, but the file tree must stay in sync so that
+# language-switch links never 404.
+check_docs_lang_sync:
+  stage: pre_check
+  image: $ESP_DOCS_ENV_IMAGE
+  tags:
+    - build_docs
+  extends:
+    - .rules:build:docs
+  dependencies: []
+  needs: []
+  script:
+    - cd docs
+    - ./check_lang_folder_sync.sh
+
+.build_docs_template:
+  stage: build_docs
+  image: $ESP_DOCS_ENV_IMAGE
+  tags:
+    - build_docs
+  dependencies: []
+  needs:
+    - job: check_docs_lang_sync
+      artifacts: false
+      optional: true
+  variables:
+    DOCS_DIR: $CI_PROJECT_DIR/docs
+  script:
+    - cd $DOCS_DIR
+    - pip install -r requirements.txt
+    - build-docs --skip-reqs-check -bs $DOC_BUILDERS -l $DOCLANG build
+    - echo "ESP Board Manager documentation preview available at $CI_JOB_URL/artifacts/file/docs/_build/$DOCLANG/generic/html/index.html"
+  parallel:
+    matrix:
+      - DOCLANG: ["en", "zh_CN"]
+
+build_docs_html:
+  extends:
+    - .build_docs_template
+    - .rules:build:docs
+  artifacts:
+    when: always
+    paths:
+      - docs/_build/*/*/*.txt
+      - docs/_build/*/*/html/*
+    expire_in: 4 days
+  variables:
+    DOC_BUILDERS: "html"
+
+.deploy_docs_template:
+  image: $ESP_DOCS_ENV_IMAGE
+  stage: deploy_docs
+  tags:
+    - deploy
+    - shiny
+  variables:
+    DOCS_BUILD_DIR: "${CI_PROJECT_DIR}/docs/_build/"
+    PYTHONUNBUFFERED: 1
+    GIT_STRATEGY: clone
+    GIT_DEPTH: 0
+  script:
+    - source ${CI_PROJECT_DIR}/tools/ci/utils.sh
+    - git fetch --tags --prune
+    - add_doc_server_ssh_keys $DOCS_DEPLOY_PRIVATEKEY $DOCS_DEPLOY_SERVER $DOCS_DEPLOY_SERVER_USER
+    - export GIT_VER=$(git describe --always)
+    - pip install -r ${CI_PROJECT_DIR}/docs/requirements.txt
+    - deploy-docs
+
+deploy_docs_preview:
+  extends:
+    - .deploy_docs_template
+    - .rules:deploy:docs:preview
+  needs:
+    - job: build_docs_html
+      artifacts: true
+  variables:
+    TYPE: "preview"
+    DOCS_DEPLOY_PRIVATEKEY: "$DOCS_PREVIEW_PRIVATEKEY"
+    DOCS_DEPLOY_SERVER: "$DOCS_PREVIEW_SERVER"
+    DOCS_DEPLOY_SERVER_USER: "$DOCS_PREVIEW_SERVER_USER"
+    DOCS_DEPLOY_PATH: "$DOCS_PREVIEW_PATH"
+    DOCS_DEPLOY_URL_BASE: "$DOCS_PREVIEW_URL_BASE"
+
+deploy_docs_production:
+  extends:
+    - .deploy_docs_template
+    - .rules:deploy:docs:production
+  needs:
+    - job: build_docs_html
+      artifacts: true
+  variables:
+    TYPE: "production"
+    DOCS_DEPLOY_PRIVATEKEY: "$DOCS_PROD_PRIVATEKEY"
+    DOCS_DEPLOY_SERVER: "$DOCS_PROD_SERVER"
+    DOCS_DEPLOY_SERVER_USER: "$DOCS_PROD_SERVER_USER"
+    DOCS_DEPLOY_PATH: "$DOCS_PROD_PATH"
+    DOCS_DEPLOY_URL_BASE: "https://docs.espressif.com/projects/esp-board-manager"
+    DEPLOY_STABLE: 1
