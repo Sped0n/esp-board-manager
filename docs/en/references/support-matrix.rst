@@ -28,6 +28,8 @@ Supported Device Types
      - FAT file system, supporting SDMMC / SPI.
    * - ``fs_spiffs``
      - SPIFFS partition file system.
+   * - ``littlefs``
+     - LittleFS file system, supporting flash / SDMMC / SPI.
    * - ``gpio_ctrl``
      - GPIO control device.
    * - ``gpio_expander``

@@ -9,6 +9,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+from generators.utils.idf_version import get_idf_version
 
 DEV_LCD_TOUCH_I2C_MAX_ADDR_COUNT = 4
 
@@ -98,22 +99,31 @@ def _parse_i2c_sub_config(name: str, full_config: dict, peripherals_dict=None) -
 
     addrs = _parse_i2c_addr_list(name, i2c_periph)
     flags = io_i2c_config.get('flags', {})
+    io_i2c_config_parsed = {
+        'dev_addr': 0,
+        'control_phase_bytes': int(io_i2c_config.get('control_phase_bytes', 1)),
+        'dc_bit_offset': int(io_i2c_config.get('dc_bit_offset', 0)),
+        'lcd_cmd_bits': int(io_i2c_config.get('lcd_cmd_bits', 8)),
+        'lcd_param_bits': int(io_i2c_config.get('lcd_param_bits', 0)),
+        'scl_speed_hz': int(io_i2c_config.get('scl_speed_hz', 100000)),
+        'flags': {
+            'dc_low_on_data': bool(flags.get('dc_low_on_data', False)),
+            'disable_control_phase': bool(flags.get('disable_control_phase', True)),
+        },
+    }
+    if get_idf_version()[0] >= 6:
+        io_i2c_config_parsed['transaction_timeout_ms'] = int(io_i2c_config.get('transaction_timeout_ms', 0))
+    elif int(io_i2c_config.get('transaction_timeout_ms', 0)) != 0:
+        print(
+            f"YAML WARNING: LCD touch device {name} field 'io_i2c_config.transaction_timeout_ms' "
+            'requires ESP-IDF v6.0 or later and will be ignored.'
+        )
+
     return {
         'i2c_name': i2c_name,
         'i2c_addr_count': len([addr for addr in addrs if addr > 0]),
         'i2c_addr': [f'0x{addr:02x}' for addr in addrs],
-        'io_i2c_config': {
-            'dev_addr': 0,
-            'control_phase_bytes': int(io_i2c_config.get('control_phase_bytes', 1)),
-            'dc_bit_offset': int(io_i2c_config.get('dc_bit_offset', 0)),
-            'lcd_cmd_bits': int(io_i2c_config.get('lcd_cmd_bits', 8)),
-            'lcd_param_bits': int(io_i2c_config.get('lcd_param_bits', 0)),
-            'scl_speed_hz': int(io_i2c_config.get('scl_speed_hz', 100000)),
-            'flags': {
-                'dc_low_on_data': bool(flags.get('dc_low_on_data', False)),
-                'disable_control_phase': bool(flags.get('disable_control_phase', True)),
-            },
-        },
+        'io_i2c_config': io_i2c_config_parsed,
     }
 
 

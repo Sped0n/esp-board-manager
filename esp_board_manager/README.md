@@ -2,6 +2,8 @@
 
 [中文版](README_CN.md)
 
+Online documentation: [Espressif Board Manager Guide](https://docs.espressif.com/projects/esp-board-manager/en/latest/index.html)
+
 This is a board management component developed by Espressif that focuses on the initialization of development board devices. It uses YAML files to describe the configuration of the main controller and external functional devices, automatically generates configuration code, and simplifies the process of adding new boards. It provides a unified device management interface, which not only improves the reusability of device initialization code but also simplifies the adaptation of applications to various development boards.
 
 > **Version Requirements:** Compatible with ESP-IDF release/v5.4(>= v5.4.3) and release/v5.5(>= v5.5.2) branches.
@@ -330,6 +332,7 @@ Note: '✅' indicates supported, '❌' indicates not yet supported, '-' indicate
 | `display_lcd` | LCD | display_lcd | dsi<br/>spi<br/>parlio<br/>rgb<br/>rgb_3wire_spi<br/>i80 | dsi<br/>spi | [`dev_display_lcd`](devices/dev_display_lcd/dev_display_lcd.yaml) | **[`test_dev_lcd_lvgl.c`](test_apps/main/test_dev_lcd_lvgl.c)** <br/>LCD display with LVGL, touch screen, and backlight control |
 | `fs_fat` | FAT filesystem device | fs_fat | sdmmc<br/>spi | sdmmc<br/>spi | [`dev_fs_fat`](devices/dev_fs_fat/dev_fs_fat.yaml) | **[`test_dev_fs_fat.c`](test_apps/main/test_dev_fs_fat.c)** <br/>SD card operations and FATFS file system testing |
 | `fs_spiffs` | SPIFFS filesystem device | fs_spiffs | - | - | [`dev_fs_spiffs`](devices/dev_fs_spiffs/dev_fs_spiffs.yaml) | **[`test_dev_fs_spiffs.c`](test_apps/main/test_dev_fs_spiffs.c)** <br/>SPIFFS file system testing |
+| `littlefs` | LittleFS filesystem device | littlefs | flash<br/>sdmmc<br/>spi | sdmmc<br/>spi | [`dev_littlefs`](devices/dev_littlefs/dev_littlefs.yaml) | **[`test_dev_littlefs.c`](test_apps/main/test_dev_littlefs.c)** <br/>LittleFS file system testing |
 | `lcd_touch` | Touch screen | lcd_touch | i2c | i2c | [`dev_lcd_touch`](devices/dev_lcd_touch/dev_lcd_touch.yaml) | **[`test_dev_lcd_lvgl.c`](test_apps/main/test_dev_lcd_lvgl.c)** <br/>LCD display with LVGL, touch screen, and backlight control |
 | `power_ctrl` | Power control device | power_ctrl | gpio | gpio | [`dev_power_ctrl`](devices/dev_power_ctrl/dev_power_ctrl.yaml) | - |
 | `gpio_ctrl` | GPIO control device | gpio_ctrl | - | gpio | [`dev_gpio_ctrl`](devices/dev_gpio_ctrl/dev_gpio_ctrl.yaml) | - |

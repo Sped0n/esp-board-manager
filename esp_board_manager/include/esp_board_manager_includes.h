@@ -124,6 +124,11 @@
 #include "dev_fs_spiffs.h"
 #endif  /* CONFIG_ESP_BOARD_DEV_FS_SPIFFS_SUPPORT */
 
+/* LittleFS Filesystem Device */
+#ifdef CONFIG_ESP_BOARD_DEV_LITTLEFS_SUPPORT
+#include "dev_littlefs.h"
+#endif  /* CONFIG_ESP_BOARD_DEV_LITTLEFS_SUPPORT */
+
 /* GPIO Control Device */
 #ifdef CONFIG_ESP_BOARD_DEV_GPIO_CTRL_SUPPORT
 #include "dev_gpio_ctrl.h"

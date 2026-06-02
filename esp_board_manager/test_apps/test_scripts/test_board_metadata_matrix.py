@@ -1183,6 +1183,27 @@ DEVICE_CASES = [
         },
     },
     {
+        'id': 'dev_littlefs_flash',
+        'chip': 'esp32s3',
+        'peripherals': [],
+        'device': {
+            'name': 'littlefs',
+            'type': 'littlefs',
+            'sub_type': 'flash',
+            'config': {
+                'vfs_config': {
+                    'base_path': '/littlefs',
+                    'partition_label': 'littlefs',
+                    'grow_on_mount': True,
+                },
+            },
+        },
+        'expected': {
+            'type': 'littlefs',
+            'sub_type': 'flash',
+        },
+    },
+    {
         'id': 'dev_gpio_ctrl',
         'chip': 'esp32s3',
         'peripherals': [

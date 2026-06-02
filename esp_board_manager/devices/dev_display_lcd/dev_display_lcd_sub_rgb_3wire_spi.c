@@ -15,7 +15,9 @@
 #include "esp_lcd_panel_io.h"
 #include "esp_lcd_panel_io_additions.h"
 #include "esp_lcd_panel_ops.h"
+#ifdef CONFIG_ESP_BOARD_DEV_GPIO_EXPANDER_SUPPORT
 #include "esp_io_expander.h"
+#endif  /* CONFIG_ESP_BOARD_DEV_GPIO_EXPANDER_SUPPORT */
 #include "dev_display_lcd.h"
 
 static const char *TAG = "DEV_DISPLAY_LCD_SUB_RGB_3WIRE_SPI";
@@ -72,6 +74,10 @@ int dev_display_lcd_sub_rgb_3wire_spi_init(void *cfg, int cfg_size, void **devic
 
     const char *io_expander_name = lcd_cfg->sub_cfg.rgb_3wire_spi.io_expander_name;
     if (io_expander_name && strlen(io_expander_name) > 0) {
+#ifndef CONFIG_ESP_BOARD_DEV_GPIO_EXPANDER_SUPPORT
+        ESP_LOGE(TAG, "IO expander '%s' configured but GPIO expander support is disabled", io_expander_name);
+        goto cleanup;
+#else
         esp_err_t dev_ret = esp_board_device_init(io_expander_name);
         if (dev_ret != ESP_OK) {
             ESP_LOGE(TAG, "Failed to init IO expander device '%s': %s", io_expander_name, esp_err_to_name(dev_ret));
@@ -86,6 +92,7 @@ int dev_display_lcd_sub_rgb_3wire_spi_init(void *cfg, int cfg_size, void **devic
             goto cleanup_io_expander;
         }
         io_config.line_config.io_expander = *(esp_io_expander_handle_t *)io_expander_dev;
+#endif  /* CONFIG_ESP_BOARD_DEV_GPIO_EXPANDER_SUPPORT */
     }
 
 #if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(6, 0, 0)

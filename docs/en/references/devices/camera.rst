@@ -58,7 +58,7 @@ DVP (``sub_type: dvp``)
               data_io_7: 39              # [IO]
         peripherals:
           - name: i2c_master
-            frequency: 400000
+            frequency: 100000
 
 .. _camera-csi:
 
@@ -85,7 +85,7 @@ CSI (``sub_type: csi``)
               xclk_freq_hz: 20000000     # [TO_BE_CONFIRMED]
         peripherals:
           - name: i2c_master
-            frequency: 400000
+            frequency: 100000
           - name: ldo_mipi
 
 .. _camera-spi:
@@ -143,7 +143,7 @@ DVP Full Fields
       type: camera         # The type of the camera, must be equal to "camera"
       sub_type: dvp        # The bus type: dvp
       config:
-        # DVP interface configuration (used when bus_type is "dvp")
+        # DVP interface configuration (used when sub_type is "dvp")
         dvp_config:
           reset_io: -1        # [IO] GPIO pin for reset signal (default: -1, not connected)
           pwdn_io: -1         # [IO] GPIO pin for power down signal (default: -1, not connected)
@@ -178,7 +178,7 @@ DVP Full Fields
       # I2C configuration for camera control (For the USB-UVC camera, this configuration is not required)
       peripherals:
         - name: i2c_master     # [TO_BE_CONFIRMED] I2C bus name for camera control (default: depends on implementation)
-          frequency: 400000    # I2C frequency in Hz (default: 400kHz)
+          frequency: 100000    # I2C frequency in Hz (default: 400kHz)
 
 CSI Full Fields
 ^^^^^^^^^^^^^^^
@@ -190,7 +190,7 @@ CSI Full Fields
       type: camera             # The type of the camera, must be equal to "camera"
       sub_type: "csi"          # The bus type: csi
       config:
-        # CSI interface configuration (used when bus_type is "csi")
+        # CSI interface configuration (used when sub_type is "csi")
         csi_config:
           reset_io: 1           # [IO] GPIO pin for reset signal (example value)
           pwdn_io: 2            # [IO] GPIO pin for power down signal (example value)
@@ -203,7 +203,7 @@ CSI Full Fields
       # I2C configuration for camera control
       peripherals:
         - name: i2c_master      # [TO_BE_CONFIRMED] I2C bus name for camera control
-          frequency: 400000     # I2C frequency in Hz
+          frequency: 100000     # I2C frequency in Hz
         - name: ldo_mipi        # [TO_BE_CONFIRMED] LDO peripheral for csi power management
 
 SPI Camera Full Fields

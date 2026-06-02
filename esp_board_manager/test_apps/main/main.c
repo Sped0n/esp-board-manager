@@ -36,6 +36,10 @@
 #include "test_dev_fs_fat.h"
 #endif  /* defined(CONFIG_ESP_BOARD_DEV_FS_FAT_SUPPORT) */
 
+#ifdef CONFIG_ESP_BOARD_DEV_LITTLEFS_SUPPORT
+#include "test_dev_littlefs.h"
+#endif  /* CONFIG_ESP_BOARD_DEV_LITTLEFS_SUPPORT */
+
 #ifdef CONFIG_ESP_BOARD_DEV_LEDC_CTRL_SUPPORT
 #include "test_dev_ledc.h"
 #endif  /* CONFIG_ESP_BOARD_DEV_LEDC_CTRL_SUPPORT */
@@ -98,6 +102,14 @@ static void test_fs_fat_filesystem(void)
     test_fs_fat_device();
 }
 #endif  /* defined(CONFIG_ESP_BOARD_DEV_FS_FAT_SUPPORT) */
+
+#ifdef CONFIG_ESP_BOARD_DEV_LITTLEFS_SUPPORT
+static void test_littlefs_filesystem(void)
+{
+    ESP_LOGI(TAG, "Starting LittleFS filesystem tests...");
+    test_littlefs();
+}
+#endif  /* CONFIG_ESP_BOARD_DEV_LITTLEFS_SUPPORT */
 
 #ifdef CONFIG_ESP_BOARD_DEV_LEDC_CTRL_SUPPORT
 static void test_ledc_device(void)
@@ -202,6 +214,10 @@ void app_main(void)
 #if defined(CONFIG_ESP_BOARD_DEV_FS_FAT_SUPPORT)
     test_fs_fat_filesystem();
 #endif  /* defined(CONFIG_ESP_BOARD_DEV_FS_FAT_SUPPORT) */
+
+#ifdef CONFIG_ESP_BOARD_DEV_LITTLEFS_SUPPORT
+    test_littlefs_filesystem();
+#endif  /* CONFIG_ESP_BOARD_DEV_LITTLEFS_SUPPORT */
 
 #ifdef CONFIG_ESP_BOARD_DEV_LEDC_CTRL_SUPPORT
     test_ledc_device();

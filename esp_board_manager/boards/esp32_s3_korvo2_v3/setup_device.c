@@ -12,9 +12,7 @@
 #include "esp_log.h"
 #include "esp_err.h"
 #include "esp_check.h"
-#include "esp_board_device.h"
-#include "esp_board_periph.h"
-#include "dev_gpio_expander.h"
+#include "esp_board_manager_includes.h"
 #if __has_include(<esp_lcd_ili9341.h>)
 #define HAS_ILI9341  1
 #include "esp_lcd_ili9341.h"

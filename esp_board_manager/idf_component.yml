@@ -1,4 +1,4 @@
-version: 0.5.13
+version: 0.5.14
 description: Board manager for Espressif
 url: https://github.com/espressif/esp-board-manager
 documentation: https://github.com/espressif/esp-board-manager/blob/main/esp_board_manager/README.md
@@ -55,3 +55,9 @@ dependencies:
     version: "^1.0.0"
     matches:
       - if: "$CONFIG{ESP_BOARD_DEV_DISPLAY_LCD_SUB_RGB_3WIRE_SPI_SUPPORT} == True"
+
+  joltwallet/littlefs:
+    require: public
+    version: "^1.22.1"
+    matches:
+      - if: "$CONFIG{ESP_BOARD_DEV_LITTLEFS_SUPPORT} == True"

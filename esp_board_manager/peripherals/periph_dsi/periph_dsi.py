@@ -9,6 +9,7 @@ VERSION = 'v1.0.0'
 import sys
 import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'generators'))
+from generators.utils.idf_version import get_idf_version
 
 def get_includes() -> list:
     """Return list of required include headers for MIPI_DSI peripheral"""
@@ -57,16 +58,30 @@ def parse(name: str, config: dict) -> dict:
         if not isinstance(lane_bit_rate_mbps, int) or lane_bit_rate_mbps <= 0:
             raise ValueError(f'Invalid lane_bit_rate_mbps: {lane_bit_rate_mbps}. Must be an integer > 0.')
 
+        flags = bus_cfg.get('flags', {})
+        clock_lane_force_hs = bool(flags.get('clock_lane_force_hs', False))
+
         # Create base config
+        struct_init = {
+            'bus_id': bus_id,
+            'num_data_lanes': num_data_lanes,
+            'phy_clk_src': phy_clk_src,
+            'lane_bit_rate_mbps': lane_bit_rate_mbps
+        }
+        if get_idf_version()[0] >= 6:
+            struct_init['flags'] = {
+                'clock_lane_force_hs': clock_lane_force_hs,
+            }
+        elif clock_lane_force_hs:
+            print(
+                f"YAML WARNING: DSI peripheral '{name}' field 'flags.clock_lane_force_hs' "
+                'requires ESP-IDF v6.0 or later and will be ignored.'
+            )
+
         result = {
             'struct_type': 'esp_lcd_dsi_bus_config_t',
             'struct_var': f'{name}_cfg',
-            'struct_init': {
-                'bus_id': bus_id,
-                'num_data_lanes': num_data_lanes,
-                'phy_clk_src': phy_clk_src,
-                'lane_bit_rate_mbps': lane_bit_rate_mbps
-            }
+            'struct_init': struct_init
         }
         return result
 

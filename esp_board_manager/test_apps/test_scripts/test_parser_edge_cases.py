@@ -94,6 +94,204 @@ def test_fs_fat_sdmmc_accepts_zero_slot_flags(bmgr_root):
     assert result['struct_init']['sub_cfg']['sdmmc']['slot_flags'] == 0
 
 
+def test_littlefs_flash_parses_native_vfs_config(bmgr_root):
+    sys.path.insert(0, str(bmgr_root))
+    from devices.dev_littlefs import dev_littlefs as mod
+
+    result = mod.parse(
+        'littlefs',
+        {
+            'type': 'littlefs',
+            'sub_type': 'flash',
+            'config': {
+                'vfs_config': {
+                    'base_path': '/littlefs',
+                    'partition_label': 'storage',
+                    'format_if_mount_failed': False,
+                    'read_only': False,
+                    'dont_mount': False,
+                    'grow_on_mount': True,
+                },
+            },
+        },
+    )
+
+    littlefs_cfg = result['struct_init']['vfs_config']
+    assert littlefs_cfg['base_path'] == '/littlefs'
+    assert littlefs_cfg['partition_label'] == 'storage'
+    assert littlefs_cfg['partition'] is None
+    assert littlefs_cfg['grow_on_mount'] is True
+
+
+def test_littlefs_sdmmc_accepts_zero_slot_flags(bmgr_root):
+    sys.path.insert(0, str(bmgr_root))
+    from devices.dev_littlefs import dev_littlefs as mod
+
+    result = mod.parse(
+        'littlefs',
+        {
+            'type': 'littlefs',
+            'sub_type': 'sdmmc',
+            'config': {
+                'vfs_config': {
+                    'base_path': '/littlefs',
+                    'partition_label': 'ignored_for_sd',
+                },
+                'sub_config': {
+                    'frequency': 'SDMMC_FREQ_DEFAULT',
+                    'slot_flags': 0,
+                },
+            },
+        },
+    )
+
+    littlefs_cfg = result['struct_init']['vfs_config']
+    assert littlefs_cfg['partition_label'] is None
+    assert result['struct_init']['sub_cfg']['sdmmc']['slot_flags'] == 0
+
+
+def test_littlefs_spi_resolves_spi_master_peripheral(bmgr_root):
+    from types import SimpleNamespace
+
+    sys.path.insert(0, str(bmgr_root))
+    from devices.dev_littlefs import dev_littlefs as mod
+
+    result = mod.parse(
+        'littlefs',
+        {
+            'type': 'littlefs',
+            'sub_type': 'spi',
+            'peripherals': [
+                {
+                    'name': 'sd_spi_bus',
+                },
+            ],
+            'config': {
+                'sub_config': {
+                    'cs_gpio_num': 10,
+                    'frequency': 'SDMMC_FREQ_DEFAULT',
+                },
+            },
+        },
+        {
+            'sd_spi_bus': SimpleNamespace(type='spi', role='master'),
+        },
+    )
+
+    spi_cfg = result['struct_init']['sub_cfg']['spi']
+    assert spi_cfg['cs_gpio_num'] == 10
+    assert spi_cfg['spi_bus_name'] == 'sd_spi_bus'
+
+
+def test_littlefs_spi_requires_peripheral_context(bmgr_root):
+    sys.path.insert(0, str(bmgr_root))
+    from devices.dev_littlefs import dev_littlefs as mod
+
+    with pytest.raises(ValueError, match='peripheral validation context'):
+        mod.parse(
+            'littlefs',
+            {
+                'type': 'littlefs',
+                'sub_type': 'spi',
+                'peripherals': [{'name': 'sd_spi_bus'}],
+                'config': {},
+            },
+        )
+
+
+def test_littlefs_spi_reports_bad_peripheral_reference(bmgr_root):
+    from types import SimpleNamespace
+
+    sys.path.insert(0, str(bmgr_root))
+    from devices.dev_littlefs import dev_littlefs as mod
+
+    with pytest.raises(ValueError, match='checked references'):
+        mod.parse(
+            'littlefs',
+            {
+                'type': 'littlefs',
+                'sub_type': 'spi',
+                'peripherals': [{'name': 'i2c_master'}],
+                'config': {},
+            },
+            {
+                'i2c_master': SimpleNamespace(type='i2c', role='master'),
+            },
+        )
+
+
+def test_littlefs_spi_reports_missing_peripheral_reference(bmgr_root):
+    sys.path.insert(0, str(bmgr_root))
+    from devices.dev_littlefs import dev_littlefs as mod
+
+    with pytest.raises(ValueError, match='missing references'):
+        mod.parse(
+            'littlefs',
+            {
+                'type': 'littlefs',
+                'sub_type': 'spi',
+                'peripherals': [{'name': 'sd_spi_bus'}],
+                'config': {},
+            },
+            {},
+        )
+
+
+def test_littlefs_rejects_runtime_handles(bmgr_root):
+    sys.path.insert(0, str(bmgr_root))
+    from devices.dev_littlefs import dev_littlefs as mod
+
+    with pytest.raises(ValueError, match='runtime handle fields'):
+        mod.parse(
+            'littlefs',
+            {
+                'type': 'littlefs',
+                'sub_type': 'flash',
+                'config': {
+                    'vfs_config': {
+                        'base_path': '/littlefs',
+                        'sdcard': 'card',
+                    },
+                },
+            },
+        )
+
+
+def test_littlefs_rejects_read_only_format_or_grow(bmgr_root):
+    sys.path.insert(0, str(bmgr_root))
+    from devices.dev_littlefs import dev_littlefs as mod
+
+    with pytest.raises(ValueError, match='format_if_mount_failed'):
+        mod.parse(
+            'littlefs',
+            {
+                'type': 'littlefs',
+                'sub_type': 'flash',
+                'config': {
+                    'vfs_config': {
+                        'read_only': True,
+                        'format_if_mount_failed': True,
+                    },
+                },
+            },
+        )
+
+    with pytest.raises(ValueError, match='grow_on_mount'):
+        mod.parse(
+            'littlefs',
+            {
+                'type': 'littlefs',
+                'sub_type': 'flash',
+                'config': {
+                    'vfs_config': {
+                        'read_only': True,
+                        'grow_on_mount': True,
+                    },
+                },
+            },
+        )
+
+
 def test_peripheral_yaml_rejects_duplicate_names(bmgr_root, tmp_path):
     sys.path.insert(0, str(bmgr_root))
     from generators.peripheral_parser import PeripheralParser
@@ -296,6 +494,56 @@ def test_i2c_basic_parse_returns_i2c_master_bus_config(bmgr_root):
     assert result['struct_init']['i2c_port'] == 'I2C_NUM_0'
     assert result['struct_init']['sda_io_num'] == 18
     assert result['struct_init']['scl_io_num'] == 23
+
+def test_spi_bus_dma_burst_size_is_idf6_only(bmgr_root, monkeypatch, capsys):
+    sys.path.insert(0, str(bmgr_root))
+    from peripherals.periph_spi import periph_spi as mod
+
+    cfg = {
+        'config': {
+            'spi_bus_config': {
+                'spi_port': 1,
+                'mosi_io_num': 1,
+                'miso_io_num': 2,
+                'sclk_io_num': 3,
+                'dma_burst_size': 64,
+            },
+        },
+    }
+
+    monkeypatch.setattr(mod, 'get_idf_version', lambda: (6, 0, 0))
+    result = mod.parse('spi_master', cfg)
+    assert result['struct_init']['spi_bus_config']['dma_burst_size'] == 64
+
+    monkeypatch.setattr(mod, 'get_idf_version', lambda: (5, 5, 4))
+    result = mod.parse('spi_master', cfg)
+    assert 'dma_burst_size' not in result['struct_init']['spi_bus_config']
+    assert 'requires ESP-IDF v6.0' in capsys.readouterr().out
+
+def test_dsi_clock_lane_force_hs_is_idf6_only(bmgr_root, monkeypatch, capsys):
+    sys.path.insert(0, str(bmgr_root))
+    from peripherals.periph_dsi import periph_dsi as mod
+
+    cfg = {
+        'config': {
+            'bus_id': 0,
+            'data_lanes': 2,
+            'phy_clk_src': 0,
+            'lane_bit_rate_mbps': 1000,
+            'flags': {
+                'clock_lane_force_hs': True,
+            },
+        },
+    }
+
+    monkeypatch.setattr(mod, 'get_idf_version', lambda: (6, 0, 0))
+    result = mod.parse('dsi_panel', cfg)
+    assert result['struct_init']['flags']['clock_lane_force_hs'] is True
+
+    monkeypatch.setattr(mod, 'get_idf_version', lambda: (5, 5, 4))
+    result = mod.parse('dsi_panel', cfg)
+    assert 'flags' not in result['struct_init']
+    assert 'requires ESP-IDF v6.0' in capsys.readouterr().out
 
 def test_dependency_manager_treats_null_devices_as_empty(bmgr_root, tmp_path):
     sys.path.insert(0, str(bmgr_root))
@@ -526,6 +774,82 @@ def test_display_lcd_spi_fallback_uses_generic_spi_prefix(bmgr_root):
 
     assert result['struct_init']['sub_cfg']['spi']['spi_name'] == 'spi_bus_custom'
 
+def test_display_lcd_spi_psram_dma_direct_is_idf6_only(bmgr_root, monkeypatch, capsys):
+    sys.path.insert(0, str(bmgr_root))
+    from devices.dev_display_lcd import dev_display_lcd as mod
+
+    cfg = {
+        'name': 'display_lcd',
+        'type': 'display_lcd',
+        'sub_type': 'spi',
+        'config': {
+            'io_spi_config': {
+                'flags': {
+                    'psram_dma_direct': True,
+                },
+            },
+        },
+        'peripherals': [
+            {'name': 'spi_master'},
+        ],
+    }
+
+    monkeypatch.setattr(mod, 'get_idf_version', lambda: (6, 0, 0))
+    result = mod.parse('display_lcd', cfg, peripherals_dict={'spi_master': object()})
+    flags = result['struct_init']['sub_cfg']['spi']['io_spi_config']['flags']
+    assert flags['psram_dma_direct'] is True
+
+    monkeypatch.setattr(mod, 'get_idf_version', lambda: (5, 5, 4))
+    result = mod.parse('display_lcd', cfg, peripherals_dict={'spi_master': object()})
+    flags = result['struct_init']['sub_cfg']['spi']['io_spi_config']['flags']
+    assert 'psram_dma_direct' not in flags
+    assert 'requires ESP-IDF v6.0' in capsys.readouterr().out
+
+def test_display_lcd_i80_allow_pd_is_idf6_only(bmgr_root, monkeypatch, capsys):
+    sys.path.insert(0, str(bmgr_root))
+    from devices.dev_display_lcd import dev_display_lcd as mod
+
+    cfg = {
+        'name': 'display_lcd',
+        'type': 'display_lcd',
+        'sub_type': 'i80',
+        'config': {
+            'bus_config': {
+                'flags': {
+                    'allow_pd': True,
+                },
+            },
+        },
+    }
+
+    monkeypatch.setattr(mod, 'get_idf_version', lambda: (6, 0, 0))
+    result = mod.parse('display_lcd', cfg)
+    bus_cfg = result['struct_init']['sub_cfg']['i80']['bus_config']
+    assert bus_cfg['flags']['allow_pd'] is True
+
+    monkeypatch.setattr(mod, 'get_idf_version', lambda: (5, 5, 4))
+    result = mod.parse('display_lcd', cfg)
+    bus_cfg = result['struct_init']['sub_cfg']['i80']['bus_config']
+    assert 'flags' not in bus_cfg
+    assert 'requires ESP-IDF v6.0' in capsys.readouterr().out
+
+def test_display_lcd_parlio_rejects_known_idf_before_5_5(bmgr_root, monkeypatch):
+    sys.path.insert(0, str(bmgr_root))
+    from devices.dev_display_lcd import dev_display_lcd as mod
+
+    monkeypatch.setattr(mod, 'get_idf_version', lambda: (5, 4, 3))
+
+    with pytest.raises(ValueError, match='parlio requires ESP-IDF v5.5'):
+        mod.parse(
+            'display_lcd',
+            {
+                'name': 'display_lcd',
+                'type': 'display_lcd',
+                'sub_type': 'parlio',
+                'config': {},
+            },
+        )
+
 def test_display_lcd_rgb_idf6_uses_color_formats_and_user_fbs_func(bmgr_root, monkeypatch):
     sys.path.insert(0, str(bmgr_root))
     from devices.dev_display_lcd import dev_display_lcd as mod
@@ -675,6 +999,35 @@ def test_lcd_touch_i2c_uses_8bit_addrs_and_i2c_sub_config(bmgr_root):
     assert i2c_cfg['i2c_addr'] == ['0xba', '0x2c', '0x00', '0x00']
     assert i2c_cfg['io_i2c_config']['dev_addr'] == 0
     assert i2c_cfg['io_i2c_config']['scl_speed_hz'] == 400000
+
+def test_lcd_touch_i2c_transaction_timeout_is_idf6_only(bmgr_root, monkeypatch, capsys):
+    sys.path.insert(0, str(bmgr_root))
+    from devices.dev_lcd_touch import dev_lcd_touch as mod
+
+    cfg = {
+        'type': 'lcd_touch',
+        'chip': 'gt911',
+        'sub_type': 'i2c',
+        'config': {
+            'io_i2c_config': {
+                'transaction_timeout_ms': 50,
+            },
+        },
+        'peripherals': [
+            {'name': 'i2c_master', 'i2c_addr': 0xBA},
+        ],
+    }
+
+    monkeypatch.setattr(mod, 'get_idf_version', lambda: (6, 0, 0))
+    result = mod.parse('lcd_touch', cfg, peripherals_dict={'i2c_master': object()})
+    io_cfg = result['struct_init']['sub_cfg']['i2c']['io_i2c_config']
+    assert io_cfg['transaction_timeout_ms'] == 50
+
+    monkeypatch.setattr(mod, 'get_idf_version', lambda: (5, 5, 4))
+    result = mod.parse('lcd_touch', cfg, peripherals_dict={'i2c_master': object()})
+    io_cfg = result['struct_init']['sub_cfg']['i2c']['io_i2c_config']
+    assert 'transaction_timeout_ms' not in io_cfg
+    assert 'requires ESP-IDF v6.0' in capsys.readouterr().out
 
 def test_lcd_touch_i2c_rejects_7bit_addr(bmgr_root):
     sys.path.insert(0, str(bmgr_root))

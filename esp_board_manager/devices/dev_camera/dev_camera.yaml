@@ -8,7 +8,7 @@
   type: camera         # The type of the camera, must be equal to "camera"
   sub_type: dvp        # The bus type: dvp
   config:
-    # DVP interface configuration (used when bus_type is "dvp")
+    # DVP interface configuration (used when sub_type is "dvp")
     dvp_config:
       reset_io: -1        # [IO] GPIO pin for reset signal (default: -1, not connected)
       pwdn_io: -1         # [IO] GPIO pin for power down signal (default: -1, not connected)
@@ -43,14 +43,14 @@
   # I2C configuration for camera control (For the USB-UVC camera, this configuration is not required)
   peripherals:
     - name: i2c_master     # [TO_BE_CONFIRMED] I2C bus name for camera control (default: depends on implementation)
-      frequency: 400000    # I2C frequency in Hz (default: 400kHz)
+      frequency: 100000    # I2C frequency in Hz (default: 100kHz)
 
 # Example CSI camera configuration
 - name: camera             # The name of the device, must be unique
   type: camera             # The type of the camera, must be equal to "camera"
   sub_type: "csi"          # The bus type: csi
   config:
-    # CSI interface configuration (used when bus_type is "csi")
+    # CSI interface configuration (used when sub_type is "csi")
     csi_config:
       reset_io: 1           # [IO] GPIO pin for reset signal (example value)
       pwdn_io: 2            # [IO] GPIO pin for power down signal (example value)
@@ -63,7 +63,7 @@
   # I2C configuration for camera control
   peripherals:
     - name: i2c_master      # [TO_BE_CONFIRMED] I2C bus name for camera control
-      frequency: 400000     # I2C frequency in Hz
+      frequency: 100000     # I2C frequency in Hz (default: 100kHz)
     - name: ldo_mipi        # [TO_BE_CONFIRMED] LDO peripheral for csi power management
 
 # Example SPI camera configuration
@@ -99,4 +99,4 @@
         channel: 0                        # [TO_BE_CONFIRMED] LEDC channel used for XCLK
   peripherals:
     - name: i2c_master                   # Must match a periph_i2c name; provides SCCB i2c_handle to esp_video
-      frequency: 100000                   # SCCB I2C frequency (Hz)
+      frequency: 100000                   # SCCB I2C frequency in Hz (default: 100kHz)

@@ -337,6 +337,13 @@ def std_clk_supports_bclk_div() -> bool:
     return get_idf_version() >= (5, 5, 0)
 
 
+def default_tdm_slot_mask(slot_mode) -> str:
+    """Return parser default TDM active slots for an ESP-IDF slot mode value."""
+    if slot_mode == 'I2S_SLOT_MODE_MONO':
+        return 'I2S_TDM_SLOT0'
+    return 'I2S_TDM_SLOT0 | I2S_TDM_SLOT1'
+
+
 def validate_pdm_data_fmt_compat(cfg: dict) -> None:
     """Reject explicit RAW/advanced PDM data format on older IDF branches."""
     if pdm_slot_supports_data_fmt():
@@ -586,7 +593,7 @@ def parse(name: str, config: dict) -> dict:
                     'data_bit_width': f"I2S_DATA_BIT_WIDTH_{cfg.get('data_bit_width', 16)}BIT",
                     'slot_bit_width': get_enum_value(cfg.get('slot_bit_width'), 'I2S_SLOT_BIT_WIDTH_AUTO', 'slot_bit_width'),
                     'slot_mode': get_enum_value(cfg.get('slot_mode'), 'I2S_SLOT_MODE_STEREO', 'slot_mode'),
-                    'slot_mask': cfg.get('slot_mask', 'I2S_TDM_SLOT0 | I2S_TDM_SLOT1' if cfg.get('slot_mode', 'STEREO') == 'STEREO' else 'I2S_TDM_SLOT0'),
+                    'slot_mask': cfg.get('slot_mask', default_tdm_slot_mask(cfg.get('slot_mode', 'I2S_SLOT_MODE_STEREO'))),
                     'ws_width': int(cfg.get('ws_width', 0)),  # I2S_TDM_AUTO_WS_WIDTH
                     'ws_pol': bool(cfg.get('ws_pol', False)),
                     'bit_shift': bool(cfg.get('bit_shift', True)),

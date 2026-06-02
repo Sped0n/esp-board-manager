@@ -23,6 +23,7 @@
    camera
    fs-fat
    fs-spiffs
+   littlefs
    custom
 
 配置来源
