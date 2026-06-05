@@ -264,6 +264,13 @@ class BoardConfigGenerator(LoggerMixin):
 """
         return entry
 
+    @staticmethod
+    def _subtype_omits_parent_depends(is_device, name, sub_type):
+        """Return true for sub-type symbols that must stay selectable without the parent symbol."""
+        return is_device and (name, sub_type) in {
+            ('display_lcd', 'rgb_3wire_spi'),
+        }
+
     def generate_nested_kconfig_entry(self, name, path, is_device, default_value='n', sub_types=None, sub_type_separator='_SUB_'):
         """Generate a nested Kconfig entry for a component with sub_types.
 
@@ -293,12 +300,7 @@ class BoardConfigGenerator(LoggerMixin):
         if sub_types:
             for sub_type in sub_types:
                 sub_macro_name = f'ESP_BOARD_{prefix}_{name.upper()}{sub_type_separator}{sub_type.upper()}_SUPPORT'
-                special_case_without_depends = (
-                    is_device
-                    and name == 'display_lcd'
-                    and sub_type == 'rgb_3wire_spi'
-                )
-                depends_on_line = '' if special_case_without_depends else f'    depends on {macro_name}\n'
+                depends_on_line = '' if self._subtype_omits_parent_depends(is_device, name, sub_type) else f'    depends on {macro_name}\n'
                 entry += f"""config {sub_macro_name}
     bool "{component_type} '{name}' {sub_type} sub-type support"
 {depends_on_line}    help

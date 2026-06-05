@@ -47,7 +47,7 @@ static bool verify_file_content(const char *file_path, const char *expected_cont
 void test_spiffs(void)
 {
     const char *test_str = "Hello SPIFFS!\n";
-    const char *expected_test_content = "This is esp board manager";
+    const char *expected_test_content = "This is esp board manager\n";
 
     dev_fs_spiffs_config_t *cfg = NULL;
     if (esp_board_manager_get_device_config("fs_spiffs", (void **)&cfg) != ESP_OK) {

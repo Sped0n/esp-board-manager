@@ -19,6 +19,7 @@ idf_component_register(
         $<$<BOOL:${CONFIG_ESP_BOARD_DEV_AUDIO_CODEC_SUPPORT}>:test_dev_audio_codec.c>
         $<$<BOOL:${CONFIG_ESP_BOARD_DEV_FS_SPIFFS_SUPPORT}>:test_dev_fs_spiffs.c>
         $<$<BOOL:${CONFIG_ESP_BOARD_DEV_FS_FAT_SUPPORT}>:test_dev_fs_fat.c>
+        $<$<BOOL:${CONFIG_ESP_BOARD_DEV_LITTLEFS_SUPPORT}>:test_dev_littlefs.c>
         $<$<BOOL:${CONFIG_ESP_BOARD_DEV_DISPLAY_LCD_SUPPORT}>:test_dev_lcd_lvgl.c>
         $<$<BOOL:${CONFIG_ESP_BOARD_DEV_DISPLAY_LCD_SUPPORT}>:test_dev_lcd_init.c>
         $<$<BOOL:${CONFIG_ESP_BOARD_DEV_GPIO_CTRL_SUPPORT}>:test_dev_pwr_ctrl.c>
@@ -36,7 +37,7 @@ idf_component_register(
         # Utility files (conditionally included)
         $<$<BOOL:${CONFIG_ESP_BOARD_DEV_AUDIO_CODEC_SUPPORT}>:wav_header.c>
     INCLUDE_DIRS "." "./periph"
-    REQUIRES esp_board_manager esp_lcd esp_timer esp_partition spiffs
+    REQUIRES esp_board_manager gen_bmgr_codes esp_lcd esp_timer esp_partition spiffs
     EMBED_TXTFILES audio_files/test.wav
 )
 
@@ -65,3 +66,7 @@ endforeach()
 
 
 spiffs_create_partition_image(storage ../spiffs_image FLASH_IN_PROJECT)
+
+if(CONFIG_ESP_BOARD_DEV_LITTLEFS_SUB_FLASH_SUPPORT)
+    littlefs_create_partition_image(littlefs ../littlefs_image FLASH_IN_PROJECT)
+endif()

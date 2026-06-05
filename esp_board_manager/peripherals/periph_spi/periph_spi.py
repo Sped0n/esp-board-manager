@@ -21,6 +21,7 @@ PERIPH_SPI_IO_LIST = [
 import sys
 import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'generators'))
+from generators.utils.idf_version import get_idf_version
 
 def get_includes() -> list:
     """Return list of required include headers for SPI peripheral"""
@@ -138,6 +139,10 @@ def parse(name: str, config: dict) -> dict:
         if not isinstance(max_transfer_sz, int) or max_transfer_sz <= 0:
             raise ValueError(f'Invalid max_transfer_sz: {max_transfer_sz}. Must be positive int.')
 
+        dma_burst_size = spi_bus_config.get('dma_burst_size', 0)
+        if not isinstance(dma_burst_size, int) or dma_burst_size < 0:
+            raise ValueError(f'Invalid dma_burst_size: {dma_burst_size}. Must be non-negative int.')
+
         # Parse flags
         flags = spi_bus_config.get('flags', 0)
         if not isinstance(flags, int):
@@ -169,27 +174,36 @@ def parse(name: str, config: dict) -> dict:
 
 
         # Create configuration structure
+        spi_bus_config_init = {
+            'mosi_io_num': mosi_io_num,
+            'miso_io_num': miso_io_num,
+            'sclk_io_num': sclk_io_num,
+            'quadwp_io_num': quadwp_io_num,
+            'quadhd_io_num': quadhd_io_num,
+            'data4_io_num': data4_io_num,
+            'data5_io_num': data5_io_num,
+            'data6_io_num': data6_io_num,
+            'data7_io_num': data7_io_num,
+            'data_io_default_level': data_io_default_level,
+            'max_transfer_sz': max_transfer_sz,
+            'flags': flags,
+            'isr_cpu_id': isr_cpu_id,
+            'intr_flags': intr_flags
+        }
+        if get_idf_version()[0] >= 6:
+            spi_bus_config_init['dma_burst_size'] = dma_burst_size
+        elif dma_burst_size != 0:
+            print(
+                f"YAML WARNING: SPI peripheral '{name}' field 'spi_bus_config.dma_burst_size' "
+                'requires ESP-IDF v6.0 or later and will be ignored.'
+            )
+
         result = {
             'struct_type': 'periph_spi_config_t',
             'struct_var': f'{name}_cfg',
             'struct_init': {
                 'spi_port': spi_port_enum,
-                'spi_bus_config': {
-                    'mosi_io_num': mosi_io_num,
-                    'miso_io_num': miso_io_num,
-                    'sclk_io_num': sclk_io_num,
-                    'quadwp_io_num': quadwp_io_num,
-                    'quadhd_io_num': quadhd_io_num,
-                    'data4_io_num': data4_io_num,
-                    'data5_io_num': data5_io_num,
-                    'data6_io_num': data6_io_num,
-                    'data7_io_num': data7_io_num,
-                    'data_io_default_level': data_io_default_level,
-                    'max_transfer_sz': max_transfer_sz,
-                    'flags': flags,
-                    'isr_cpu_id': isr_cpu_id,
-                    'intr_flags': intr_flags
-                }
+                'spi_bus_config': spi_bus_config_init
             }
         }
 

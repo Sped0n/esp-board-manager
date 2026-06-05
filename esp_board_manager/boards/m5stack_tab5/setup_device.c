@@ -6,16 +6,13 @@
  */
 
 #include "esp_log.h"
-
+#include "esp_board_manager_includes.h"
 #include "esp_io_expander_pi4ioe5v6408.h"
 #include "esp_lcd_ili9881c.h"
 #include "esp_lcd_st7123.h"
 #include "esp_lcd_touch_gt911.h"
 #include "esp_lcd_touch_st7123.h"
-
 #include "disp_init_data.h"
-#include "dev_display_lcd.h"
-#include "esp_board_device.h"
 
 static const char *TAG = "M5STACK_TAB5_SETUP_DEVICE";
 

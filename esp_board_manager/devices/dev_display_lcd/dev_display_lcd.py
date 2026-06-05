@@ -87,6 +87,9 @@ def _find_peripheral_name_in_dict(peripherals_dict, prefix: str):
             return periph_name
     return None
 
+def _warn_ignored_idf6_field(device_name: str, field_path: str) -> None:
+    print(f"YAML WARNING: LCD display device {device_name} field '{field_path}' requires ESP-IDF v6.0 or later and will be ignored.")
+
 def get_includes() -> list:
     """Return list of required include headers for LCD Display device"""
     return [
@@ -194,6 +197,8 @@ def parse_spi_sub_config(full_config: dict = None, peripherals_dict=None) -> dic
     sub_config = full_config.get('config', {})
     # Get IO SPI configuration
     io_spi_config = sub_config.get('io_spi_config', {})
+    io_spi_flags = io_spi_config.get('flags', {})
+    idf_major = get_idf_version()[0]
     io_spi_config_parsed = {
         'cs_gpio_num': io_spi_config.get('cs_gpio_num', -1),
         'dc_gpio_num': io_spi_config.get('dc_gpio_num', -1),
@@ -205,16 +210,20 @@ def parse_spi_sub_config(full_config: dict = None, peripherals_dict=None) -> dic
         'cs_ena_pretrans': io_spi_config.get('cs_ena_pretrans', 0),
         'cs_ena_posttrans': io_spi_config.get('cs_ena_posttrans', 0),
         'flags': {
-            'dc_high_on_cmd': io_spi_config.get('flags', {}).get('dc_high_on_cmd', False),
-            'dc_low_on_data': io_spi_config.get('flags', {}).get('dc_low_on_data', False),
-            'dc_low_on_param': io_spi_config.get('flags', {}).get('dc_low_on_param', False),
-            'octal_mode': io_spi_config.get('flags', {}).get('octal_mode', False),
-            'quad_mode': io_spi_config.get('flags', {}).get('quad_mode', False),
-            'sio_mode': io_spi_config.get('flags', {}).get('sio_mode', False),
-            'lsb_first': io_spi_config.get('flags', {}).get('lsb_first', False),
-            'cs_high_active': io_spi_config.get('flags', {}).get('cs_high_active', False)
+            'dc_high_on_cmd': io_spi_flags.get('dc_high_on_cmd', False),
+            'dc_low_on_data': io_spi_flags.get('dc_low_on_data', False),
+            'dc_low_on_param': io_spi_flags.get('dc_low_on_param', False),
+            'octal_mode': io_spi_flags.get('octal_mode', False),
+            'quad_mode': io_spi_flags.get('quad_mode', False),
+            'sio_mode': io_spi_flags.get('sio_mode', False),
+            'lsb_first': io_spi_flags.get('lsb_first', False),
+            'cs_high_active': io_spi_flags.get('cs_high_active', False)
         }
     }
+    if idf_major >= 6:
+        io_spi_config_parsed['flags']['psram_dma_direct'] = io_spi_flags.get('psram_dma_direct', False)
+    elif io_spi_flags.get('psram_dma_direct', False):
+        _warn_ignored_idf6_field(full_config.get('name'), 'io_spi_config.flags.psram_dma_direct')
 
     panel_config_parsed = _parse_lcd_panel_dev_config_dict(sub_config)
 
@@ -261,6 +270,10 @@ def _parse_lcd_panel_dev_config_dict(sub_config: dict) -> dict:
 
 def parse_parlio_sub_config(full_config: dict = None, peripherals_dict=None) -> dict:
     """Parse PARLIO (esp_lcd_io_parl) sub configuration; no SPI peripheral reference."""
+    idf_version = get_idf_version()
+    if idf_version != (0, 0, 0) and idf_version < (5, 5, 0):
+        raise ValueError('LCD display sub_type parlio requires ESP-IDF v5.5 or later')
+
     sub_config = full_config.get('config', {})
     x_max = int(sub_config.get('x_max', 320))
     io = sub_config.get('io_parl_config', {})
@@ -458,8 +471,10 @@ def parse_rgb_3wire_spi_sub_config(full_config: dict = None, peripherals_dict=No
 def parse_i80_sub_config(full_config: dict = None, peripherals_dict=None) -> dict:
     """Parse I80 sub configuration."""
     sub_config = full_config.get('config', {})
+    idf_major = get_idf_version()[0]
 
     bus_config = sub_config.get('bus_config', {})
+    bus_flags = bus_config.get('flags', {})
     bus_config_parsed = {
         'dc_gpio_num': bus_config.get('dc_gpio_num', -1),
         'wr_gpio_num': bus_config.get('wr_gpio_num', -1),
@@ -469,6 +484,12 @@ def parse_i80_sub_config(full_config: dict = None, peripherals_dict=None) -> dic
         'max_transfer_bytes': bus_config.get('max_transfer_bytes', 4092),
         'dma_burst_size': bus_config.get('dma_burst_size', 64),
     }
+    if idf_major >= 6:
+        bus_config_parsed['flags'] = {
+            'allow_pd': bool(bus_flags.get('allow_pd', False)),
+        }
+    elif bus_flags.get('allow_pd', False):
+        _warn_ignored_idf6_field(full_config.get('name'), 'bus_config.flags.allow_pd')
 
     io_config = sub_config.get('io_config', {})
     io_config_parsed = {

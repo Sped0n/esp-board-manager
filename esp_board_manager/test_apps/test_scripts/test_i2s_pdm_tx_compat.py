@@ -113,6 +113,36 @@ def test_known_non_esp32_chip_keeps_pdm_tx_dout2_in_generated_gpio_cfg(bmgr_root
     gpio_cfg = result['struct_init']['i2s_cfg']['pdm_tx']['gpio_cfg']
     assert gpio_cfg['dout2'] == 6
 
+def test_tdm_default_slot_mask_tracks_slot_mode_enum(bmgr_root):
+    sys.path.insert(0, str(bmgr_root))
+    from peripherals.periph_i2s import periph_i2s as mod
+
+    stereo = mod.parse(
+        'i2s_audio_out',
+        {
+            'type': 'i2s',
+            'role': 'master',
+            'format': 'tdm-out',
+            'config': {
+                'slot_mode': 'I2S_SLOT_MODE_STEREO',
+            },
+        },
+    )
+    mono = mod.parse(
+        'i2s_audio_out',
+        {
+            'type': 'i2s',
+            'role': 'master',
+            'format': 'tdm-out',
+            'config': {
+                'slot_mode': 'I2S_SLOT_MODE_MONO',
+            },
+        },
+    )
+
+    assert stereo['struct_init']['i2s_cfg']['tdm']['slot_cfg']['slot_mask'] == 'I2S_TDM_SLOT0 | I2S_TDM_SLOT1'
+    assert mono['struct_init']['i2s_cfg']['tdm']['slot_cfg']['slot_mask'] == 'I2S_TDM_SLOT0'
+
 def _write_soc_caps(tmp_path: Path, chip: str, text: str) -> Path:
     idf = tmp_path / 'idf'
     caps = idf / 'components' / 'soc' / chip / 'include' / 'soc' / 'soc_caps.h'

@@ -332,6 +332,34 @@ config ESP_BOARD_DEV_LEDC_CTRL_SUPPORT
         This option enables the ledc_ctrl device driver.
         The driver is located at: devices/dev_ledc_ctrl
 
+config ESP_BOARD_DEV_LITTLEFS_SUPPORT
+    bool "Device 'littlefs' support"
+    help
+        Enable littlefs device support.
+        This option enables the littlefs device driver.
+        The driver is located at: devices/dev_littlefs
+
+config ESP_BOARD_DEV_LITTLEFS_SUB_FLASH_SUPPORT
+    bool "Device 'littlefs' flash sub-type support"
+    depends on ESP_BOARD_DEV_LITTLEFS_SUPPORT
+    help
+        Enable littlefs flash sub-type support.
+        This option enables the littlefs flash sub-type driver.
+
+config ESP_BOARD_DEV_LITTLEFS_SUB_SDMMC_SUPPORT
+    bool "Device 'littlefs' sdmmc sub-type support"
+    depends on ESP_BOARD_DEV_LITTLEFS_SUPPORT
+    help
+        Enable littlefs sdmmc sub-type support.
+        This option enables the littlefs sdmmc sub-type driver.
+
+config ESP_BOARD_DEV_LITTLEFS_SUB_SPI_SUPPORT
+    bool "Device 'littlefs' spi sub-type support"
+    depends on ESP_BOARD_DEV_LITTLEFS_SUPPORT
+    help
+        Enable littlefs spi sub-type support.
+        This option enables the littlefs spi sub-type driver.
+
 config ESP_BOARD_DEV_POWER_CTRL_SUPPORT
     bool "Device 'power_ctrl' support"
     help

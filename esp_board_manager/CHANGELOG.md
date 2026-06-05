@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.5.14
+
+### Features
+
+- Added **littlefs** filesystem device (`type: littlefs`) with `flash`, `sdmmc`, and `spi` sub-types
+- Added ESP-IDF v6.0 specific configuration fields. They are emitted only when building against IDF v6.0 or later, and a warning is printed (the field ignored) on older IDF versions:
+  - `display_lcd` SPI `io_spi_config.flags.psram_dma_direct`
+  - `display_lcd` I80 `bus_config.flags.allow_pd`
+  - `lcd_touch` I2C `io_i2c_config.transaction_timeout_ms`
+  - `periph_dsi` `flags.clock_lane_force_hs`
+  - `periph_spi` `spi_bus_config.dma_burst_size`
+- The `display_lcd` `parlio` sub-type now validates that the active ESP-IDF is v5.5 or later
+
+### Modifications
+
+- Updated **M5Stack Tab5** defaults with the ESP32-P4 chip revision options (`CONFIG_ESP32P4_SELECTS_REV_LESS_V3`, `CONFIG_ESP32P4_REV_MIN_100`)
+
 ## 0.5.13
 
 ### Bug Fixes

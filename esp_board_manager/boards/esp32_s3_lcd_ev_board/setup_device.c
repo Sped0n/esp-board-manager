@@ -8,11 +8,9 @@
 #include <string.h>
 #include "driver/gpio.h"
 #include "esp_check.h"
-#include "esp_board_device.h"
 #include "esp_err.h"
 #include "esp_log.h"
-#include "dev_display_lcd.h"
-
+#include "esp_board_manager_includes.h"
 #if __has_include(<esp_io_expander_tca9554.h>)
 #define HAS_TCA9554  1
 #include "esp_io_expander_tca9554.h"

@@ -7,8 +7,7 @@
 
 #include <string.h>
 #include "esp_log.h"
-#include "dev_display_lcd.h"
-
+#include "esp_board_manager_includes.h"
 #if __has_include(<esp_lcd_ek79007.h>)
 #define HAS_EK79007  1
 #include "esp_lcd_ek79007.h"

@@ -2,6 +2,8 @@
 
 [English](README.md)
 
+在线文档：[乐鑫板卡管理值南](https://docs.espressif.com/projects/esp-board-manager/zh_CN/latest/index.html)
+
 这是由 Espressif 开发的专注于开发板设备初始化的板级管理组件。使用 YAML 文件来描述主控制器和外部功能设备的配置，能够自动生成配置代码，简化了添加新板子的过程。提供了统一的设备管理接口，不仅提高了设备初始化代码的可重用性，还简化了应用程序对各种开发板的适配。
 
 > **版本要求:** 兼容 ESP-IDF release/v5.4(>= v5.4.3) 和 release/v5.5(>= v5.5.2) 分支。
@@ -330,6 +332,7 @@ void app_main(void)
 | `display_lcd` | LCD 显示设备 | display_lcd | dsi<br/>spi<br/>parlio<br/>rgb<br/>rgb_3wire_spi<br/>i80 | dsi<br/>spi | [`dev_display_lcd.yaml`](devices/dev_display_lcd/dev_display_lcd.yaml) | **[`test_dev_lcd_lvgl.c`](test_apps/main/test_dev_lcd_lvgl.c)** <br/>带有 LVGL、触摸屏和背光控制的 LCD 显示屏 |
 | `fs_fat` | FAT 文件系统设备 | fs_fat | sdmmc<br/>spi | sdmmc<br/>spi | [`dev_fs_fat.yaml`](devices/dev_fs_fat/dev_fs_fat.yaml) | **[`test_dev_fs_fat.c`](test_apps/main/test_dev_fs_fat.c)** <br/>SD 卡操作和 FATFS 文件系统测试 |
 | `fs_spiffs` | SPIFFS 文件系统设备 | fs_spiffs | - | - | [`dev_fs_spiffs.yaml`](devices/dev_fs_spiffs/dev_fs_spiffs.yaml) | **[`test_dev_fs_spiffs.c`](test_apps/main/test_dev_fs_spiffs.c)** <br/>SPIFFS 文件系统测试 |
+| `littlefs` | LittleFS 文件系统设备 | littlefs | flash<br/>sdmmc<br/>spi | sdmmc<br/>spi | [`dev_littlefs.yaml`](devices/dev_littlefs/dev_littlefs.yaml) | **[`test_dev_littlefs.c`](test_apps/main/test_dev_littlefs.c)** <br/>LittleFS 文件系统测试 |
 | `lcd_touch` | 触摸屏 | lcd_touch | i2c | i2c | [`dev_lcd_touch.yaml`](devices/dev_lcd_touch/dev_lcd_touch.yaml) | **[`test_dev_lcd_lvgl.c`](test_apps/main/test_dev_lcd_lvgl.c)** <br/>带有 LVGL、触摸屏和背光控制的 LCD 显示屏 |
 | `power_ctrl` | 电源控制设备 | power_ctrl | gpio | gpio | [`dev_power_ctrl.yaml`](devices/dev_power_ctrl/dev_power_ctrl.yaml) | - |
 | `gpio_ctrl` | GPIO 控制设备 | gpio_ctrl | - | gpio | [`dev_gpio_ctrl.yaml`](devices/dev_gpio_ctrl/dev_gpio_ctrl.yaml) | - |

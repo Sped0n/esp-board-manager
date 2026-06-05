@@ -180,7 +180,7 @@ STD 模式完整字段
       # Valid role values: master, slave
       role: master
       # Valid format values: std-out, std-in, default direction is output
-      format: std
+      format: std-out
       config:
         port: 0  # [TO_BE_CONFIRMED] I2S port
         # ===== CLOCK CONFIGURATION =====
@@ -206,6 +206,9 @@ STD 模式完整字段
         # MCLK multiple (default: 256)
         mclk_multiple: 256
         # Valid values: 128, 192, 256, 384, 512, 576, 768, 1024, 1152
+
+        # BCLK divider (default: 8). STD mode emits this field only on ESP-IDF >= 5.5.
+        bclk_div: 8
 
         # ===== SLOT CONFIGURATION =====
         # Data bit width (default: 16)
@@ -243,13 +246,14 @@ STD 模式完整字段
         # Bit shift (default: true)
         bit_shift: true
 
-        # Left align (default: true)
+        # SOC_I2S_HW_VERSION_1 slot field (ESP32/ESP32-S2; default: true)
+        # SOC_I2S_HW_VERSION_2 layouts do not provide msb_right.
+        msb_right: true
+
+        # SOC_I2S_HW_VERSION_2 slot fields (default: true/false/false)
+        # SOC_I2S_HW_VERSION_1 layouts do not provide these fields.
         left_align: true
-
-        # Big endian (default: false)
         big_endian: false
-
-        # Bit order LSB (default: false)
         bit_order_lsb: false
 
         # ===== GPIO CONFIGURATION =====
@@ -277,7 +281,7 @@ TDM 模式完整字段
       # Valid role values: master, slave
       role: master
       # Valid format values: tdm-out, tdm-in, default direction is output
-      format: tdm
+      format: tdm-out
       config:
         port: 0  # [TO_BE_CONFIRMED] I2S port
         # ===== CLOCK CONFIGURATION =====
@@ -309,12 +313,15 @@ TDM 模式完整字段
         # Slot mode (default: I2S_SLOT_MODE_STEREO)
         slot_mode: "I2S_SLOT_MODE_STEREO"  # [TO_BE_CONFIRMED] Slot mode
 
-        # TDM slot mask (auto-generated based on slot_mode)
+        # TDM slot mask (default is based on slot_mode)
         # For STEREO: I2S_TDM_SLOT0 | I2S_TDM_SLOT1
         # For MONO: I2S_TDM_SLOT0
+        # You may also use a C expression such as:
+        # I2S_TDM_SLOT0 | I2S_TDM_SLOT1 | I2S_TDM_SLOT2
+        slot_mask: "I2S_TDM_SLOT0 | I2S_TDM_SLOT1"
 
-        # WS width (default: 16)
-        ws_width: 16
+        # WS width (default: 0, IDF I2S_TDM_AUTO_WS_WIDTH)
+        ws_width: 0
 
         # WS polarity (default: false)
         ws_pol: false
@@ -334,8 +341,8 @@ TDM 模式完整字段
         # Skip mask (default: false)
         skip_mask: false
 
-        # Total slots (default: 2)
-        total_slot: 2
+        # Total slots (default: 0, IDF I2S_TDM_AUTO_SLOT_NUM)
+        total_slot: 0
 
         # ===== GPIO CONFIGURATION =====
         pins:
@@ -390,7 +397,8 @@ PDM 输出完整字段
         # Slot mode (default: I2S_SLOT_MODE_STEREO)
         slot_mode: "I2S_SLOT_MODE_STEREO"  # [TO_BE_CONFIRMED] Slot mode
 
-        # PDM slot mask (default: I2S_PDM_SLOT_BOTH)
+        # PDM TX slot mask (default: I2S_PDM_SLOT_BOTH).
+        # Emitted only for SOC_I2S_HW_VERSION_1 layouts.
         slot_mask: "I2S_PDM_SLOT_BOTH"
         # Valid values:
         # - I2S_PDM_SLOT_LEFT
@@ -398,7 +406,8 @@ PDM 输出完整字段
         # - I2S_PDM_SLOT_BOTH
 
         # Data format (default: I2S_PDM_DATA_FMT_PCM)
-        # This configuration is only supported in IDF v5.5 and later versions
+        # This field is emitted only on ESP-IDF >= 5.5. On older IDF versions,
+        # explicit I2S_PDM_DATA_FMT_RAW is rejected; PCM is treated as the default.
         data_fmt: "I2S_PDM_DATA_FMT_PCM"
         # Valid values:
         # - I2S_PDM_DATA_FMT_PCM
@@ -418,18 +427,21 @@ PDM 输出完整字段
         lp_scale: "I2S_PDM_SIG_SCALING_MUL_1"
         sinc_scale: "I2S_PDM_SIG_SCALING_MUL_1"
 
-        # Line mode (default: I2S_PDM_TX_ONE_LINE_CODEC)
+        # Line mode (default: I2S_PDM_TX_ONE_LINE_CODEC).
+        # Emitted only for SOC_I2S_HW_VERSION_2 layouts.
         line_mode: "I2S_PDM_TX_ONE_LINE_CODEC"
         # Valid values:
         # - I2S_PDM_TX_ONE_LINE_CODEC
         # - I2S_PDM_TX_ONE_LINE_DAC
         # - I2S_PDM_TX_TWO_LINE_DAC
 
-        # High pass filter settings
+        # High pass filter settings.
+        # Emitted only for SOC_I2S_HW_VERSION_2 layouts.
         hp_en: true
         hp_cut_off_freq_hz: 35.5
 
-        # Sigma-delta dither settings
+        # Sigma-delta dither settings.
+        # Emitted only for SOC_I2S_HW_VERSION_2 layouts.
         sd_dither: 0
         sd_dither2: 1
 
@@ -438,8 +450,9 @@ PDM 输出完整字段
           # PDM TX mode pins
           clk: -1                     # [IO] Clock pin
           dout: -1                    # [IO] Data output pin
+          # Emitted only when the target exposes a second PDM TX data line.
+          # ESP32 defines SOC_I2S_PDM_MAX_TX_LINES (1), so no dout2 field is generated.
           dout2: -1                   # [IO] Second data pin for dual-line DAC mode
-                                      # ESP32 defines SOC_I2S_PDM_MAX_TX_LINES (1) — no dout2 field.
 
         # Invert flags
         invert_flags:
@@ -503,17 +516,20 @@ PDM 输入完整字段
         # - I2S_PDM_LINE_SLOT_ALL
 
         # Data format (default: I2S_PDM_DATA_FMT_PCM)
-        # This configuration is only supported in IDF v5.5 and later versions
+        # This field is emitted only on ESP-IDF >= 5.5. On older IDF versions,
+        # explicit I2S_PDM_DATA_FMT_RAW is rejected; PCM is treated as the default.
         data_fmt: "I2S_PDM_DATA_FMT_PCM"
         # Valid values:
         # - I2S_PDM_DATA_FMT_PCM
         # - I2S_PDM_DATA_FMT_RAW
 
-        # High pass filter settings
+        # High pass filter settings.
+        # Emitted only when SOC_I2S_SUPPORTS_PDM_RX_HP_FILTER is enabled.
         hp_en: true
         hp_cut_off_freq_hz: 35.5
 
-        # Amplification number (default: 1)
+        # Amplification number (default: 1).
+        # Emitted only when SOC_I2S_SUPPORTS_PDM_RX_HP_FILTER is enabled.
         amplify_num: 1
 
         # ===== GPIO CONFIGURATION =====

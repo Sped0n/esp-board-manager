@@ -28,6 +28,8 @@
      - FAT 文件系统，支持 SDMMC / SPI。
    * - ``fs_spiffs``
      - SPIFFS 分区文件系统。
+   * - ``littlefs``
+     - LittleFS 文件系统，支持 flash / SDMMC / SPI。
    * - ``gpio_ctrl``
      - GPIO 控制型设备。
    * - ``gpio_expander``
