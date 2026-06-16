@@ -22,6 +22,12 @@ static const char *TAG = "M5STACK_TAB5_SETUP_DEVICE";
 #define TAB5_ST712X_FW_CMD      0x0000u
 #define TAB5_ST7121_FW_VERSION  1u
 #define TAB5_ST7123_FW_VERSION  3u
+#define TAB5_ST712X_ADV_INFO_CMD     0x0010u
+#define TAB5_ST712X_MAX_TOUCHES_CMD  0x0009u
+#define TAB5_ST712X_REPORT_0_CMD     0x0014u
+#define TAB5_ST712X_REPORT_SIZE      7u
+#define TAB5_ST712X_REPORT_MAX       10u
+#define TAB5_ST712X_ADV_WITH_COORD   (1u << 3)
 
 typedef struct {
     lcd_rgb_element_order_t  data_endian;
@@ -88,6 +94,60 @@ static void apply_timing(dev_display_lcd_config_t *cfg, const tab5_panel_timing_
     cfg->sub_cfg.dsi.dpi_config.video_timing.vsync_back_porch = t->vsync_back_porch;
     cfg->sub_cfg.dsi.dpi_config.video_timing.vsync_pulse_width = t->vsync_pulse_width;
     cfg->sub_cfg.dsi.dpi_config.video_timing.vsync_front_porch = t->vsync_front_porch;
+}
+
+static esp_err_t tab5_st712x_touch_read_data(esp_lcd_touch_handle_t tp)
+{
+    if (!tp || !tp->io) {
+        return ESP_ERR_INVALID_ARG;
+    }
+
+    uint8_t adv_info = 0;
+    esp_err_t ret = esp_lcd_panel_io_rx_param(tp->io, TAB5_ST712X_ADV_INFO_CMD, &adv_info, sizeof(adv_info));
+    if (ret != ESP_OK) {
+        return ret;
+    }
+
+    uint8_t report_count = 0;
+    uint8_t reports[TAB5_ST712X_REPORT_MAX][TAB5_ST712X_REPORT_SIZE] = {0};
+    if (adv_info & TAB5_ST712X_ADV_WITH_COORD) {
+        uint8_t max_touches = 0;
+        ret = esp_lcd_panel_io_rx_param(tp->io, TAB5_ST712X_MAX_TOUCHES_CMD, &max_touches, sizeof(max_touches));
+        if (ret != ESP_OK) {
+            return ret;
+        }
+
+        report_count = max_touches;
+        if (report_count > TAB5_ST712X_REPORT_MAX) {
+            ESP_LOGD(TAG, "Clamp ST712x touch report count %u", report_count);
+            report_count = TAB5_ST712X_REPORT_MAX;
+        }
+        if (report_count > 0) {
+            ret = esp_lcd_panel_io_rx_param(tp->io, TAB5_ST712X_REPORT_0_CMD, reports,
+                                            report_count * TAB5_ST712X_REPORT_SIZE);
+            if (ret != ESP_OK) {
+                return ret;
+            }
+        }
+    }
+
+    portENTER_CRITICAL(&tp->data.lock);
+    uint8_t point_count = 0;
+    for (uint8_t i = 0; i < report_count && point_count < CONFIG_ESP_LCD_TOUCH_MAX_POINTS; ++i) {
+        const uint8_t *report = reports[i];
+        if ((report[0] & 0x80u) == 0) {
+            continue;
+        }
+        tp->data.coords[point_count].track_id = i;
+        tp->data.coords[point_count].x = ((uint16_t)(report[0] & 0x3fu) << 8) | report[1];
+        tp->data.coords[point_count].y = ((uint16_t)report[2] << 8) | report[3];
+        tp->data.coords[point_count].strength = report[4];
+        ++point_count;
+    }
+    tp->data.points = point_count;
+    portEXIT_CRITICAL(&tp->data.lock);
+
+    return ESP_OK;
 }
 
 static tab5_panel_variant_t detect_panel_variant(uint16_t touch_addr)
@@ -237,6 +297,8 @@ esp_err_t lcd_touch_factory_entry_t(esp_lcd_panel_io_handle_t io,
         ret = esp_lcd_touch_new_i2c_st7123(io, touch_dev_config, ret_touch);
         if (ret != ESP_OK) {
             ESP_LOGE(TAG, "Failed to create st7123 touch: %s", esp_err_to_name(ret));
+        } else if (ret_touch && *ret_touch) {
+            (*ret_touch)->read_data = tab5_st712x_touch_read_data;
         }
         return ret;
     }
