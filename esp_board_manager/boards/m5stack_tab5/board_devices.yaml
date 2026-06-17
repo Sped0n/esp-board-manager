@@ -88,9 +88,10 @@ devices:
       espressif/esp_io_expander_pi4ioe5v6408: "*"
     config:
       max_pins: 8
-      output_io_mask: [0, 3, 4, 5, 6, 7]  # P1(WLAN_PWR_EN), P3(USB5V_EN)
-      output_io_level_mask : [1, 1, 0, 0, 0, 0]
-      output_io_mode_mask: [0, 0, 0, 0, 0, 0]
+      output_io_mask: [0, 3, 4, 5, 7]  # P0(WLAN_PWR_EN), P3(USB5V_EN), P7(CHG_EN)
+      output_io_level_mask : [1, 1, 0, 0, 0]
+      output_io_mode_mask: [0, 0, 0, 0, 0]
+      input_io_mask: [6]  # P6(USB_C_DET)
     peripherals:
       - name: i2c_master
         i2c_addr: 0x88         # I2C address of the IO expander
